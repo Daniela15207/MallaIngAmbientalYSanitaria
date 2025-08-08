@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Malla Curricular - Ingeniería Ambiental y Sanitaria</title>
+  <style>
+    :root{
+      --verde: #2e7d32;
+      --naranja: #ef6c00;
+      --azul: #1565c0;
+      --marron: #6d4c41;
+      --fondo: #f7f7f7;
+      --card: #ffffff;
+    }
+    body{
+      font-family: Inter, Arial, sans-serif;
+      background: var(--fondo);
+      margin: 0;
+      padding: 18px;
+      color: #222;
+      -webkit-font-smoothing:antialiased;
+    }
+    header{
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    h1{
+      margin: 0;
+      font-size: 20px;
+      color:#134e3b;
+    }
+    h2.sub { margin: 4px 0 12px 0; color:#333; font-size:14px; font-weight:600; opacity:0.9}
+    .container{
+      max-width:980px;
+      margin: 0 auto;
+    }
+    .grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+      gap: 14px;
+    }
+    .semester{
+      background: var(--card);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 6px 18px rgba(12,15,20,0.06);
+      border-left: 6px solid #2a7c6f;
+    }
+    .semester h3{ margin: 0 0 8px 0; font-size:16px; color:#0b6b5a }
+    ul { list-style:none; padding:0; margin:0; }
+    li.materia {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 6px;
+      border-radius:8px;
+      margin-bottom:6px;
+      border: 1px solid rgba(0,0,0,0.04);
+      background: #fff;
+    }
+    .materia .left{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:1;
+      min-width:0;
+    }
+    .materia label{
+      display:block;
+      cursor:pointer;
+      min-width:0;
+    }
+    .materia .titulo{
+      font-weight:600;
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .materia .req { font-size:12px; color:#777; font-weight:500 }
+    .tachado { text-decoration: line-through; opacity:0.5; }
+    .nota {
+      width:58px;
+      padding:6px 8px;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,0.08);
+      text-align:center;
+      font-weight:600;
+      background:#fbfbfb;
+    }
+    .color-dot{
+      width:12px; height:12px; border-radius:4px; flex-shrink:0;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+      border:1px solid rgba(0,0,0,0.05);
+    }
+    .verde{ background:var(--verde); }
+    .naranja{ background:var(--naranja); }
+    .azul{ background:var(--azul); }
+    .marron{ background:var(--marron); }
+
+    footer{ margin-top:14px; text-align:center; color:#666; font-size:13px }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+    .btn {
+      padding:8px 12px;
+      border-radius:8px;
+      border: none;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+      background: #0b6b5a;
+      color:#fff;
+    }
+    .btn.secondary { background:#eee; color:#333; }
+    .small { font-size:12px; padding:6px 10px; border-radius:8px; }
+    .top-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap }
+    @media (max-width:420px){
+      .nota{ width:48px; font-size:13px; }
+      .titulo{ font-size:12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Malla Curricular - Ingeniería Ambiental y Sanitaria</h1>
+      <div class="sub">Daniela Padilla</div>
+    </header>
+
+    <div class="top-row">
+      <div style="color:#444; font-size:13px">Marca una materia para tacharla y escribe tu nota. Todo se guarda en este dispositivo.</div>
+      <div class="actions">
+        <button class="btn" id="exportBtn">Exportar progreso (JSON)</button>
+        <button class="btn secondary small" id="importBtn">Importar JSON</button>
+        <button class="btn secondary small" id="clearBtn">Borrar todo</button>
+      </div>
+    </div>
+
+    <div class="grid" id="gridSemestres"></div>
+
+    <footer>
+      Nota: el guardado funciona en este mismo navegador y dispositivo. Si cambias de navegador o dispositivo, no se sincroniza.
+    </footer>
+  </div>
+
+  <input type="file" id="fileInput" accept="application/json" style="display:none" />
+
+<script>
+(function(){
+  const materiasPorSemestre = {
+    1: ["TECNICAS DE COMUNICACION Y REDACCION","ALGEBRA LINEAL","CALCULO DIFERENCIAL","CATEDRA UPECISTA","HUMANIDADES I","INTRODUCCION A LA ING AMBIENTAL Y SANITARIA","QUIMICA I"],
+    2: ["BIOLOGIA I","CALCULO INTEGRAL (R - CALCULO DIFERENCIAL)","DIBUJO","LENGUA EXTRANJERA - GRAMATICA","MECANICA (R - CALCULO DIFERENCIAL)","QUIMICA II (R - QUIMICA I)"],
+    3: ["ALGORITMOS Y FUNDAMENTOS DE PROGRAMACION (R - ALGEBRA LINEAL)","BIOLOGIA II (R - BIOLOGIA I)","CALCULO MULTIVARIABLE (R - CALCULO INTEGRAL)","ECOLOGIA (R - INTRODUCCION A LA ING AMBIENTAL Y SANITARIA)","ELECTROMAGNETISMO (R - MECANICA)","EPISTEMOLOGIA (R - HUMANIDADES I)","LENGUA EXTRANJERA - LECTURA (R - LENGUA EXTRANJERA - GRAMATICA)"],
+    4: ["ECUACIONES DIFERENCIALES ORDINARIAS (R - CALCULO MULTIVARIABLE)","ESTADISTICA DESCRIPTIVA E INFERENCIAL (R - CALCULO INTEGRAL)","ESTATICA (R - MECANICA)","FISICOQUIMICA AMBIENTAL (R - QUIMICA II)","LENGUA EXTRANJERA - ESCRITURA (R - LENGUA EXTRANJERA - LECTURA)","METODOLOGIA DE LA INVESTIGACION I (R - EPISTEMOLOGIA)","MICROBIOLOGIA AMBIENTAL (R - BIOLOGIA II)"],
+    5: ["DISEÑO EXPERIMENTAL (R - ESTADISTICA DESCRIPTIVA E INFERENCIAL)","GEOLOGIA (R - FISICOQUIMICA AMBIENTAL)","LENGUA EXTRANJERA CONVERSACION (R - LENGUA EXTRANJERA - ESCRITURA)","MECANICA DE FLUIDOS (R - CALCULO MULTIVARIABLE / ESTATICA)","QUIMICA SANITARIA (R - FISICOQUIMICA AMBIENTAL)","RESISTENCIA DE MATERIALES (R - ESTATICA)","TOPOGRAFIA (R - DIBUJO)"],
+    6: ["ACTIVIDAD DEPORTIVA","CONCRETO (R - RESISTENCIA DE MATERIALES)","DISEÑO DE ACUEDUCTO (R - TOPOGRAFIA / MECANICA DE FLUIDOS)","HIDRAULICA (R - MECANICA DE FLUIDOS)","METODOLOGIA DE LA INVESTIGACION II (R - DISEÑO EXPERIMENTAL / METODOLOGIA DE LA INVESTIGACION I)","RECURSOS NATURALES (R - ECOLOGIA)","SUELOS (R - GEOLOGIA)"],
+    7: ["ACTIVIDAD CULTURAL","DISEÑO DE ALCANTARILLADO (R - DISEÑO DE ACUEDUCTO)","GEOMATICA (R - TOPOGRAFIA)","HIDROLOGIA (R - ESTADISTICA DESCRIPTIVA E INFERENCIAL / RECURSOS NATURALES)","LEGISLACION AMBIENTAL (R - RECURSOS NATURALES)","PROCESOS QUIMICOS Y BIOLOGICOS (R - QUIMICA SANITARIA / MICROBIOLOGIA AMBIENTAL)","TRATAMIENTO DE AGUA POTABLE (R - HIDRAULICA / DISEÑO DE ACUEDUCTO)"],
+    8: ["ECONOMIA AMBIENTAL (R - LEGISLACION AMBIENTAL)","EVALUACION DE IMPACTO AMBIENTAL (R - LEGISLACION AMBIENTAL)","MANEJO DE CUENCAS (R - GEOMATICA / HIDROLOGIA)","PROYECTO DE INVESTIGACION (R - METODOLOGIA DE LA INVESTIGACION II)","TRATAMIENTO DE AGUAS RESIDUALES (R - DISEÑO DE ALCANTARILLADO / PROCESOS QUIMICOS Y BIOLOGICOS)","TRATAMIENTO DE RESIDUOS SOLIDOS (R - SUELOS)"],
+    9: ["CONTROL DE CONTAMINACION ATMOSFERICA (R - GEOMATICA)","COSTOS Y PRESUPUESTO (R - TRATAMIENTO DE AGUAS RESIDUALES / TRATAMIENTO DE AGUA POTABLE)","ELECTIVA IA","FORMULACION Y EVALU DE PROYEC EN INGENIERIA (R - ECONOMIA AMBIENTAL)","SEGURIDAD Y SALUD EN EL TRABAJO (R - LEGISLACION AMBIENTAL)"],
+    10: ["COMUNIDAD Y GESTION EMPRESARIAL (R - FORMULACION Y EVALU DE PROYEC EN INGENIERIA)","ELECTIVA IB","ELECTIVA II","PROYECTO DE GRADO (R - PROYECTO DE INVESTIGACION)","SISTEMAS DE GESTION (R - EVALUACION DE IMPACTO AMBIENTAL)"]
+  };
+
+  const colors = ['verde','naranja','azul','marron'];
+
+  const grid = document.getElementById('gridSemestres');
+  function build(){
+    grid.innerHTML = '';
+    for(const sem of Object.keys(materiasPorSemestre)){
+      const box = document.createElement('div');
+      box.className = 'semester';
+      const h3 = document.createElement('h3');
+      h3.textContent = 'Semestre ' + sem;
+      box.appendChild(h3);
+      const ul = document.createElement('ul');
+      const lista = materiasPorSemestre[sem];
+      lista.forEach((mat, idx)=>{
+        const li = document.createElement('li');
+        li.className = 'materia';
+        const left = document.createElement('div'); left.className='left';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `s${sem}_m${idx}_chk`;
+
+        const dot = document.createElement('div');
+        dot.className = 'color-dot ' + colors[idx % colors.length];
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+
+        const title = document.createElement('div');
+        title.className = 'titulo';
+        title.textContent = mat.replace(/\s*\(R -/,' (R -');
+
+        const req = document.createElement('div');
+        req.className = 'req';
+        // show requirement if present
+        const mReq = mat.match(/\(R - (.+)\)/);
+        if(mReq){ req.textContent = '(Req: ' + mReq[1] + ')'; }
+        // container for label text
+        label.appendChild(title);
+        label.appendChild(req);
+
+        left.appendChild(checkbox);
+        left.appendChild(dot);
+        left.appendChild(label);
+
+        // nota input
+        const nota = document.createElement('input');
+        nota.className = 'nota';
+        nota.placeholder = 'Nota';
+        nota.id = `s${sem}_m${idx}_nota`;
+        nota.title = 'Ingresa tu nota (ej. 4.5)';
+
+        // load saved state
+        const savedChecked = localStorage.getItem(checkbox.id);
+        const savedNota = localStorage.getItem(nota.id);
+        if(savedChecked === 'true'){ checkbox.checked = true; title.classList.add('tachado'); }
+        if(savedNota){ nota.value = savedNota; }
+
+        // events
+        checkbox.addEventListener('change', ()=>{
+          if(checkbox.checked){ title.classList.add('tachado'); }
+          else { title.classList.remove('tachado'); }
+          localStorage.setItem(checkbox.id, checkbox.checked ? 'true' : 'false');
+        });
+        nota.addEventListener('input', ()=>{
+          localStorage.setItem(nota.id, nota.value);
+        });
+
+        li.appendChild(left);
+        li.appendChild(nota);
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+      grid.appendChild(box);
+    }
+  }
+
+  // export/import/clear helpers
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const fileInput = document.getElementById('fileInput');
+
+  exportBtn.addEventListener('click', ()=>{
+    const data = {};
+    for(const sem of Object.keys(materiasPorSemestre)){
+      const lista = materiasPorSemestre[sem];
+      lista.forEach((_, idx)=>{
+        const chkId = `s${sem}_m${idx}_chk`;
+        const notaId = `s${sem}_m${idx}_nota`;
+        const checked = localStorage.getItem(chkId) || 'false';
+        const nota = localStorage.getItem(notaId) || '';
+        if(!data[sem]) data[sem] = {};
+        data[sem][idx] = { checked: checked, nota: nota };
+      });
+    }
+    const json = JSON.stringify(data, null, 2);
+    // download
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'malla_progreso_daniela.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const obj = JSON.parse(ev.target.result);
+        for(const sem in obj){
+          for(const idx in obj[sem]){
+            const chkId = `s${sem}_m${idx}_chk`;
+            const notaId = `s${sem}_m${idx}_nota`;
+            if(obj[sem][idx].checked) localStorage.setItem(chkId, String(obj[sem][idx].checked));
+            if(obj[sem][idx].nota) localStorage.setItem(notaId, String(obj[sem][idx].nota));
+          }
+        }
+        build(); alert('Progreso importado correctamente.');
+      }catch(err){
+        alert('JSON inválido.');
+      }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    if(confirm('¿Borrar todo el progreso guardado en este navegador?')) {
+      // remove only keys that match our pattern
+      for(const sem of Object.keys(materiasPorSemestre)){
+        const lista = materiasPorSemestre[sem];
+        lista.forEach((_, idx)=>{
+          const chkId = `s${sem}_m${idx}_chk`;
+          const notaId = `s${sem}_m${idx}_nota`;
+          localStorage.removeItem(chkId);
+          localStorage.removeItem(notaId);
+        });
+      }
+      build();
+    }
+  });
+
+  // initial build
+  build();
+})();
+</script>
+</body>
+</html>
